@@ -7,6 +7,19 @@
 3. Đổi image của service API/web sang tag `<sha>` (Render: Image URL; VPS: `docker compose pull && up -d`).
 4. Smoke test bên dưới.
 
+## Môi trường demo (27/11/2026)
+| Thành phần | Ở đâu |
+|---|---|
+| API | Render free `seatrush-api` (`srv-dc4icomi0phs73abgudg`), image `ghcr.io/dangphamv/seatrush-api:<sha>`, https://seatrush-api.onrender.com |
+| Web | Render free `seatrush-web` (`srv-dc4iebuc6qcc73dn3stg`), image `ghcr.io/dangphamv/seatrush-web:<sha>`, https://seatrush-web.onrender.com |
+| Postgres | Neon `seatrush` (`lively-paper-83653661`, aws-ap-southeast-1) |
+| Redis | Render Key Value `ai-gateway-kv`, **db 1** (workspace chỉ có 1 Redis free; ai-gateway dùng db 0) |
+| Secret | `.env.production.local` (gitignore): `DATABASE_URL`, `ADMIN_TOKEN`, `ACCESS_TOKEN_SECRET` |
+| Build | Biến repo `PUBLIC_API_URL` được nhúng vào image web lúc build |
+
+Deploy 1 SHA: `POST /v1/services/<id>/deploys {"imageUrl": "ghcr.io/dangphamv/seatrush-<app>:<sha>"}` (Render API) cho api rồi web.
+Chưa tự động: CI chưa gọi deploy hook (cần lưu URL hook làm secret của repo).
+
 ## Smoke test
 ```bash
 curl -sf $API/health                       # {"status":"ok"} (kiểm cả Postgres và Redis)

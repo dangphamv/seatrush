@@ -2,7 +2,7 @@
 
 Hệ thống bán vé concert chịu được đợt mở bán dồn dập: **phòng chờ ảo**, **giữ ghế có thời hạn**, **webhook thanh toán idempotent**, và **không bán trùng ghế nào**, chứng minh bằng load test.
 
-> Dự án cá nhân làm theo chuẩn production. Sự kiện trong demo là sự kiện giả.
+> Dự án cá nhân làm theo chuẩn production. **Demo:** https://seatrush-web.onrender.com (sự kiện giả, cổng thanh toán giả lập; Render free nên lần đầu mở có thể chờ khoảng 1 phút).
 
 ## Kết quả đo (3.000 người mua tranh 2.000 ghế, k6, máy dev)
 | | Không điều tiết | Phòng chờ 200 người/giây |
