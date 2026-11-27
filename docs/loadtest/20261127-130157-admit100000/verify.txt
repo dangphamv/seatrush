@@ -1,0 +1,5 @@
+ sold_seats | tickets | confirmed_orders | refund_orders | notifications 
+------------+---------+------------------+---------------+---------------
+       1931 |    1931 |             1273 |             0 |          1459
+
+DO

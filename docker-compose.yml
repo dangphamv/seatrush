@@ -10,5 +10,20 @@ services:
     image: redis:7-alpine
     ports: ["6390:6379"]
     healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 2s, retries: 20 }
+  # Chỉ dùng cho load test (pnpm loadtest): chạy đúng image production trên Linux.
+  api:
+    profiles: [loadtest]
+    image: seatrush-api:local
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgres://seatrush:seatrush@postgres:5432/seatrush
+      REDIS_URL: redis://redis:6379
+      ADMIN_TOKEN: dev-admin-token
+      ACCESS_TOKEN_SECRET: loadtest-access-secret-0123456789
+      SEATRUSH_RATE_LIMIT: "0"
+      SEATRUSH_ADMIT_RATE: ${ADMIT_RATE:-200}
+      DB_POOL_MAX: ${DB_POOL_MAX:-30}
+    ports: ["4100:4000"]
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_healthy } }
 volumes:
   pgdata:

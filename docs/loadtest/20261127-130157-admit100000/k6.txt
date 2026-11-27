@@ -1,0 +1,49 @@
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{name:hold}
+    ✗ 'p(95)<300' p(95)=980.34ms
+
+    http_req_duration{name:queue_status}
+    ✓ 'p(95)<50' p(95)=0s
+
+    http_req_failed
+    ✓ 'rate<0.001' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 4061    902.021863/s
+    checks_succeeded...: 100.00% 4061 out of 4061
+    checks_failed......: 0.00%   0 out of 4061
+
+    ✓ hold 201 or 409
+    ✓ paid confirmed
+
+    CUSTOM
+    hold_ok........................: 1326   294.528685/s
+    hold_sold_out..................: 1674   371.825806/s
+    paid...........................: 1061   235.667372/s
+    queue_wait_ms..................: avg=523.15ms med=9ms      p(95)=2.56s    p(99)=2.83s max=2.96s
+
+    HTTP
+    http_req_duration..............: avg=464.14ms med=438.8ms  p(95)=1.3s     p(99)=1.7s  max=1.92s
+      { expected_response:true }...: avg=464.14ms med=438.8ms  p(95)=1.3s     p(99)=1.7s  max=1.92s
+      { name:hold }................: avg=605.42ms med=664.37ms p(95)=980.34ms p(99)=1.02s max=1.05s
+      { name:queue_status }........: avg=0s       med=0s       p(95)=0s       p(99)=0s    max=0s   
+    http_req_failed................: 0.00%  0 out of 7062
+    http_reqs......................: 7062   1568.598473/s
+
+    EXECUTION
+    iteration_duration.............: avg=1.25s    med=709.2ms  p(95)=3.4s     p(99)=3.62s max=3.85s
+    iterations.....................: 3000   666.354492/s
+    vus............................: 699    min=699       max=1000
+    vus_max........................: 1000   min=1000      max=1000
+
+    NETWORK
+    data_received..................: 8.5 MB 1.9 MB/s
+    data_sent......................: 2.5 MB 545 kB/s
+
+
+
