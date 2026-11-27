@@ -1,0 +1,18 @@
+{
+  "name": "seatrush",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test --concurrency=1",
+    "migrate": "turbo run build --filter=@seatrush/db --output-logs=errors-only && pnpm --filter @seatrush/db migrate",
+    "seed": "turbo run build --filter=@seatrush/db --output-logs=errors-only && pnpm --filter @seatrush/db seed",
+    "verify": "docker compose exec -T postgres psql -U seatrush -d seatrush -v ON_ERROR_STOP=1 -f /scripts/verify.sql",
+    "loadtest": "bash loadtest/run.sh"
+  },
+  "devDependencies": { "turbo": "^2.11.9" },
+  "packageManager": "pnpm@9.14.2"
+}

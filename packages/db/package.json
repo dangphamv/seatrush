@@ -1,0 +1,23 @@
+{
+  "name": "@seatrush/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./dist/index.js" },
+  "files": ["dist", "sql"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "migrate": "node --env-file-if-exists=../../.env dist/migrate.js",
+    "seed": "node --env-file-if-exists=../../.env dist/seed.js"
+  },
+  "dependencies": { "postgres": "catalog:" },
+  "devDependencies": {
+    "@seatrush/eslint-config": "workspace:^",
+    "@seatrush/tsconfig": "workspace:^",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  }
+}

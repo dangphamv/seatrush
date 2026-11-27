@@ -1,0 +1,1 @@
+{ "extends": "@seatrush/tsconfig/nestjs.json" }
