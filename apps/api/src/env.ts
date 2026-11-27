@@ -18,6 +18,8 @@ const schema = z.object({
   SEATRUSH_RATE_LIMIT: z.coerce.number().int().min(0).default(20),
   // 0 = không chạy relay/notifier/dọn đơn trong process (test tự gọi).
   SEATRUSH_WORKERS: z.enum(["0", "1"]).default("1"),
+  // Bản demo công khai không có key PayOS: bật cổng giả lập một cách tường minh (mặc định tắt ở production).
+  SEATRUSH_FAKE_PAYMENTS: z.enum(["0", "1"]).default("0"),
   PAYOS_CLIENT_ID: z.string().optional(),
   PAYOS_API_KEY: z.string().optional(),
   PAYOS_CHECKSUM_KEY: z.string().optional(),

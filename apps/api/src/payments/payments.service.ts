@@ -13,7 +13,7 @@ type Provider = { kind: "payos"; clientId: string; apiKey: string; checksumKey: 
 export function provider(): Provider | null {
   const { PAYOS_CLIENT_ID: clientId, PAYOS_API_KEY: apiKey, PAYOS_CHECKSUM_KEY: checksumKey } = env;
   if (clientId && apiKey && checksumKey) return { kind: "payos", clientId, apiKey, checksumKey };
-  return isProduction ? null : { kind: "fake", checksumKey: FAKE_CHECKSUM_KEY };
+  return isProduction && env.SEATRUSH_FAKE_PAYMENTS !== "1" ? null : { kind: "fake", checksumKey: FAKE_CHECKSUM_KEY };
 }
 
 export type WebhookBody = { code?: string; success?: boolean; data?: Record<string, unknown>; signature?: string };

@@ -20,7 +20,7 @@ curl -sf $API/metrics | grep seatrush_events_total
 
 ## Biến môi trường
 Danh sách đầy đủ: `.env.example`. Bắt buộc ở production: `DATABASE_URL`, `REDIS_URL`, `ADMIN_TOKEN`, `ACCESS_TOKEN_SECRET`, `WEB_URL`, `PAYOS_*`
-(thiếu PAYOS ở production → thanh toán tắt, `POST /checkout` trả 503; cổng giả lập không bao giờ bật ở production).
+(thiếu PAYOS ở production → thanh toán tắt, `POST /checkout` trả 503). Bản demo công khai đặt `SEATRUSH_FAKE_PAYMENTS=1` để dùng cổng giả lập: ai cũng "trả tiền" được cho đơn bất kỳ, nên **không bao giờ bật cờ này khi bán vé thật**.
 
 ## Xoay vòng secret
 - `ACCESS_TOKEN_SECRET`: đổi → mọi người đang trong lượt mua phải vào hàng chờ lại (vị trí giữ nguyên vì nằm trong Redis). Chỉ đổi ngoài giờ mở bán.
