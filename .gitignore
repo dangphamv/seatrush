@@ -1,0 +1,12 @@
+node_modules
+dist
+.next
+.turbo
+coverage
+.env
+.env.*
+!.env.example
+loadtest/results/*
+!loadtest/results/.gitkeep
+.claude/settings.local.json
+CLAUDE.local.md

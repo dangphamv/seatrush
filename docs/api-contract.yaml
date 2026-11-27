@@ -1,0 +1,216 @@
+openapi: 3.1.0
+info:
+  title: SeatRush API
+  version: 1.0.0
+  description: >
+    Đổi API thì sửa file này trước. Lỗi trả về dạng application/problem+json (RFC 9457) với `type` là mã lỗi ngắn.
+    Mọi request của người mua gửi header `X-Client-Id` (uuid do web sinh, lưu cookie).
+servers:
+  - url: http://localhost:4000/v1
+components:
+  securitySchemes:
+    admin: { type: http, scheme: bearer }
+    access: { type: apiKey, in: header, name: X-Access-Token }
+  parameters:
+    ClientId: { name: X-Client-Id, in: header, required: true, schema: { type: string, format: uuid } }
+    EventId: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties: { type: { type: string }, title: { type: string }, status: { type: integer }, detail: { type: string } }
+    Section:
+      type: object
+      required: [id, name, priceVnd, total, available]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        priceVnd: { type: integer }
+        total: { type: integer }
+        available: { type: integer, description: "Ghế trống + ghế giữ đã hết hạn" }
+    Event:
+      type: object
+      required: [id, slug, name, venue, startsAt, salesOpenAt, status]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        venue: { type: string }
+        startsAt: { type: string, format: date-time }
+        salesOpenAt: { type: string, format: date-time }
+        status: { enum: [draft, on_sale, closed] }
+    EventDetail:
+      allOf:
+        - $ref: "#/components/schemas/Event"
+        - type: object
+          required: [sections]
+          properties: { sections: { type: array, items: { $ref: "#/components/schemas/Section" } } }
+    QueueStatus:
+      type: object
+      required: [admitted, position]
+      properties:
+        admitted: { type: boolean }
+        position: { type: integer, description: "0 = đầu hàng" }
+        etaSeconds: { type: integer }
+        accessToken: { type: string, description: "Chỉ có khi admitted" }
+        accessExpiresAt: { type: string, format: date-time }
+    Order:
+      type: object
+      required: [id, code, eventId, sectionId, email, quantity, amountVnd, status, expiresAt, seats, tickets]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: integer }
+        eventId: { type: string, format: uuid }
+        sectionId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        quantity: { type: integer, minimum: 1, maximum: 4 }
+        amountVnd: { type: integer }
+        status: { enum: [pending, confirmed, expired, refund_required] }
+        expiresAt: { type: string, format: date-time }
+        seats: { type: array, items: { type: string, description: "Ví dụ A-03" } }
+        tickets: { type: array, items: { type: string, description: "Mã vé" } }
+    Stats:
+      type: object
+      required: [available, held, sold, revenueVnd, queueLength, admitted]
+      properties:
+        available: { type: integer }
+        held: { type: integer }
+        sold: { type: integer }
+        revenueVnd: { type: integer }
+        queueLength: { type: integer }
+        admitted: { type: integer }
+  responses:
+    Problem:
+      description: Lỗi
+      content: { application/problem+json: { schema: { $ref: "#/components/schemas/Problem" } } }
+paths:
+  /events:
+    get:
+      summary: Sự kiện đang hoặc sắp mở bán (EVT-01)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Event" } } } } }
+  /events/{id}:
+    get:
+      summary: Chi tiết sự kiện kèm số ghế còn (EVT-02)
+      parameters: [{ $ref: "#/components/parameters/EventId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EventDetail" } } } }
+        "404": { $ref: "#/components/responses/Problem" }
+  /events/{id}/queue:
+    post:
+      summary: Vào hàng chờ (QUE-01). Gọi lại không đổi vị trí.
+      parameters: [{ $ref: "#/components/parameters/EventId" }, { $ref: "#/components/parameters/ClientId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/QueueStatus" } } } }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem", description: "sales_not_open | sales_closed" }
+    get:
+      summary: Vị trí hiện tại (QUE-02)
+      parameters: [{ $ref: "#/components/parameters/EventId" }, { $ref: "#/components/parameters/ClientId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/QueueStatus" } } } }
+        "404": { $ref: "#/components/responses/Problem", description: "not_in_queue" }
+  /orders:
+    post:
+      summary: Giữ ghế (HLD-01..03)
+      security: [{ access: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/ClientId" }
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string, maxLength: 64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sectionId, quantity, email]
+              properties:
+                sectionId: { type: string, format: uuid }
+                quantity: { type: integer, minimum: 1, maximum: 4 }
+                email: { type: string, format: email }
+      responses:
+        "201": { description: Đã giữ, content: { application/json: { schema: { $ref: "#/components/schemas/Order" } } } }
+        "200": { description: Trùng Idempotency-Key, trả về đơn cũ, content: { application/json: { schema: { $ref: "#/components/schemas/Order" } } } }
+        "403": { $ref: "#/components/responses/Problem", description: "access_denied" }
+        "409": { $ref: "#/components/responses/Problem", description: "not_enough_seats" }
+        "422": { $ref: "#/components/responses/Problem", description: "validation | ticket_limit" }
+  /orders/{orderId}:
+    get:
+      summary: Xem đơn (WEB-04). Chỉ client đã tạo đơn.
+      parameters:
+        - { $ref: "#/components/parameters/ClientId" }
+        - { name: orderId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Order" } } } }
+        "404": { $ref: "#/components/responses/Problem" }
+  /orders/{orderId}/checkout:
+    post:
+      summary: Tạo link thanh toán (PAY-01)
+      parameters:
+        - { $ref: "#/components/parameters/ClientId" }
+        - { name: orderId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, required: [checkoutUrl], properties: { checkoutUrl: { type: string } } } } } }
+        "409": { $ref: "#/components/responses/Problem", description: "order_not_payable" }
+  /payments/webhook:
+    post:
+      summary: Webhook cổng thanh toán (PAY-02, PAY-03). Body theo định dạng PayOS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [data, signature]
+              properties:
+                code: { type: string }
+                success: { type: boolean }
+                data: { type: object, required: [orderCode, amount, reference], properties: { orderCode: { type: integer }, amount: { type: integer }, reference: { type: string } } }
+                signature: { type: string }
+      responses:
+        "200": { description: Đã nhận (kể cả trùng) }
+        "401": { $ref: "#/components/responses/Problem", description: "bad_signature" }
+  /admin/events:
+    post:
+      summary: Tạo sự kiện và sinh ghế (EVT-03)
+      security: [{ admin: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, name, venue, startsAt, salesOpenAt, sections]
+              properties:
+                slug: { type: string }
+                name: { type: string }
+                venue: { type: string }
+                startsAt: { type: string, format: date-time }
+                salesOpenAt: { type: string, format: date-time }
+                sections:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [name, priceVnd, rows, seatsPerRow]
+                    properties:
+                      name: { type: string }
+                      priceVnd: { type: integer, minimum: 1 }
+                      rows: { type: integer, minimum: 1, maximum: 100 }
+                      seatsPerRow: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        "201": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EventDetail" } } } }
+        "401": { $ref: "#/components/responses/Problem" }
+  /admin/events/{id}/stats:
+    get:
+      summary: Số liệu một lần (ADM-01)
+      security: [{ admin: [] }]
+      parameters: [{ $ref: "#/components/parameters/EventId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Stats" } } } }
+  /admin/events/{id}/stats/stream:
+    get:
+      summary: SSE, mỗi giây một bản Stats (ADM-01). EventSource không gửi header được nên token đi qua query `?token=`.
+      parameters: [{ $ref: "#/components/parameters/EventId" }, { name: token, in: query, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: text/event-stream }
