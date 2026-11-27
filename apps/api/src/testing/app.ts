@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Agent } from "node:http";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
-import { createEvent, type NewSection } from "@seatrush/db";
+import { createEvent, createSql, migrate, type NewSection } from "@seatrush/db";
 import request from "supertest";
 
 // Trước khi import app: tắt việc nền (test tự gọi), tắt rate limit, cho vào gần như ngay khi mở bán.
@@ -12,9 +12,15 @@ process.env.SEATRUSH_ADMIT_RATE = "10";
 process.env.ADMIN_TOKEN ??= "test-admin-token";
 process.env.ACCESS_TOKEN_SECRET ??= "test-access-token-secret";
 
+// Test chạy trên DB riêng để không làm bẩn dữ liệu dev (CI chỉ có 1 DB nên không đặt biến này).
+if (process.env.TEST_DATABASE_URL) process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+
 export const ADMIN = process.env.ADMIN_TOKEN;
 
 export async function bootApp() {
+  const m = createSql(process.env.DATABASE_URL!, 1);
+  await migrate(m);
+  await m.end();
   const [{ AppModule }, { configureApp }, { SQL, REDIS }] = await Promise.all([
     import("../app.module.js"),
     import("../setup.js"),
